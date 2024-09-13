@@ -176,5 +176,18 @@ $(document).ready(function () {
     setTimeout(function () {
         $(".alert").addClass("d-none");
     }, 3000);
+
+    $('.btn-view-task').on('click', function(e) {
+        e.preventDefault();
+
+        var taskId = $(this).data('task-id'); // Get the task ID
+        var taskDetails = $('#task_detail_' + taskId).html(); // Fetch the hidden task details
+
+        // Load the task details into the modal
+        $('#modalContent').html(taskDetails);
+
+        // Show the modal
+        $('#taskModal').modal('show');
+    });
 });
 

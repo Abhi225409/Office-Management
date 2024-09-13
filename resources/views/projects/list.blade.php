@@ -21,7 +21,8 @@
             <th class="col-md-2">Name</th>
             <th class="col-md-2">Client Name</th>
             <th class="col-md-2">Project Type</th>
-            <th class="col-md-2">Total Hours</th>
+            <th class="col-md-1">Total Hours</th>
+            <th class="col-md-2">Consumed Hours</th>
             <th class="col-md-3 text-center" colspan="3">Actions</th>
         </tr>
     </thead>
@@ -32,7 +33,8 @@
                 <td class="col-md-2">{{ $project->name }}</td>
                 <td class="col-md-2">{{ $project->client_name }}</td>
                 <td class="col-md-2">{{ $project->project_type }}</td>
-                <td class="col-md-2">{{ $project->total_hours }}</td>
+                <td class="col-md-1">{{ $project->total_hours }}</td>
+                <td class="col-md-2">{{ $project->consumed_hours ? $project->consumed_hours : 0 }}</td>
                 <td class="col-md-3">
                     <div style="gap: 40px; display:flex; justify-content:center;">
                         @can('edit projects')

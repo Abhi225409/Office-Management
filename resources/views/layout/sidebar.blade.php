@@ -10,12 +10,15 @@
     <script src="{{ asset('js/jquery.min.js') }}"></script>
     <script src="{{ asset('js/script.js') }}"></script>
     <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+    
     {{-- Link the bootstrap.css Fle --}}
     <link rel="stylesheet" href="{{ asset('css/bootstrap/bootstrap.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     {{-- Link the bootstrap.min.css Fle --}}
     <link rel="stylesheet" href="{{ asset('css/bootstrap/bootstrap.min.css') }}">
     {{-- Link the fontawesome all.css Fle --}}
     <link rel="stylesheet" href="{{ asset('fontawesome/css/all.css') }}">
+
 </head>
 
 <body>
