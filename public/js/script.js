@@ -141,12 +141,12 @@ $(document).ready(function () {
                     clearInterval(intervals[taskId]);
                     alert("Timer completed for task " + taskId);
 
-                     // Disable the checkbox and save its state
-                     $('.task-checkbox[data-task-id="' + taskId + '"]').prop('disabled', true);
-                     localStorage.setItem('checkbox_disabled_' + taskId, 'true');
- 
-                     // Save the disabled state via AJAX
-                     save_task_timer(taskId, formatTime(consumedTimers[taskId]), formatTime(remainingTimers[taskId]), true);
+                    // Disable the checkbox and save its state
+                    $('.task-checkbox[data-task-id="' + taskId + '"]').prop('disabled', true);
+                    localStorage.setItem('checkbox_disabled_' + taskId, 'true');
+
+                    // Save the disabled state via AJAX
+                    save_task_timer(taskId, formatTime(consumedTimers[taskId]), formatTime(remainingTimers[taskId]), true);
                 }
             }, 1000);
 
@@ -177,7 +177,7 @@ $(document).ready(function () {
         $(".alert").addClass("d-none");
     }, 3000);
 
-    $('.btn-view-task').on('click', function(e) {
+    $('.btn-view-task').on('click', function (e) {
         e.preventDefault();
 
         var taskId = $(this).data('task-id'); // Get the task ID
@@ -189,5 +189,217 @@ $(document).ready(function () {
         // Show the modal
         $('#taskModal').modal('show');
     });
+
+    //#################### Break Management Start ####################
+
+    function ajax_break_start() {
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+        $.ajax({
+            url: '/break/start',
+            type: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function (response) {
+                console.log(response.message);
+            },
+            error: function (xhr) {
+                console.log(xhr.responseJSON.message);
+            }
+        });
+    }
+
+    function ajax_break_end() {
+        $.ajax({
+            url: '/break/end/',
+            type: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function (response) {
+                console.log(response.message);
+            },
+            error: function (xhr) {
+                console.log(xhr.responseJSON.message);
+            }
+        });
+    }
+
+    var breakStatus = localStorage.getItem('breakCheckboxState');
+    if (breakStatus === 'checked') {
+        $('.break-checkbox').prop('checked', true);
+        $('.breakstatus').html("Status : On Break");
+    } else {
+        $('.break-checkbox').prop('checked', false);
+        $('.breakstatus').html("Status : Working");
+    }
+
+    $('.break-checkbox').on('change', function () {
+        if ($(this).is(':checked')) {
+            $('.breakstatus').html("Status : On Break");
+            localStorage.setItem('breakCheckboxState', 'checked');
+            ajax_break_start()
+        } else {
+            $('.breakstatus').html("Status : Working");
+            localStorage.setItem('breakCheckboxState', 'unchecked');
+            ajax_break_end()
+        }
+    });
+
+
+    function checkCheckboxes() {
+        var isTaskChecked = $('#task-checkbox').is(':checked');
+        var isBreakChecked = $('#break-checkbox').is(':checked');
+
+        // Check if both checkboxes are unchecked
+        if (!isTaskChecked && !isBreakChecked) {
+            alert("You Are Setting Idele From 5 Minuets!");
+        }
+    }
+
+    // Set a 10-second delay to check the checkboxes
+    setTimeout(checkCheckboxes, 300000);
+
+
+    // #################### Break Management End ####################
+
+    $(function () {
+        var dateFormat = "mm/dd/yy",
+            from = $("#from")
+                .datepicker({
+                    defaultDate: "+1w",
+                    changeMonth: true,
+                    changeYear: true,
+                    numberOfMonths: 1
+                })
+                .on("change", function () {
+                    to.datepicker("option", "minDate", getDate(this));
+                    triggerAjaxIfBothSelected();
+                }),
+
+            to = $("#to").datepicker({
+                defaultDate: "+1w",
+                changeMonth: true,
+                changeYear: true,
+                numberOfMonths: 1
+            })
+                .on("change", function () {
+                    from.datepicker("option", "maxDate", getDate(this));
+                    triggerAjaxIfBothSelected();
+                });
+
+        function getDate(element) {
+            var date;
+            try {
+                date = $.datepicker.parseDate(dateFormat, element.value);
+            } catch (error) {
+                date = null;
+            }
+
+            return date;
+        }
+    });
+
+
+    function triggerAjaxIfBothSelected() {
+        var fromDate = $("#from").val();
+        var toDate = $("#to").val();
+
+        if (fromDate && toDate) {
+            $.ajaxSetup({
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                }
+            });
+
+            $.ajax({
+                url: '/filter-projects', // Use route helper for URL
+                method: "GET",
+                data: {
+                    from: fromDate,
+                    to: toDate
+                },
+
+                success: function (response) {
+                    console.log(response);
+                    $('#allProjects').html(response.html)
+                }
+            });
+
+        }
+    }
+
+    //######################### Task Filter ################################################
+    $(function () {
+        var dateFormat = "mm/dd/yy",
+            from = $("#task_from")
+                .datepicker({
+                    defaultDate: "+1w",
+                    changeMonth: true,
+                    changeYear: true,
+                    numberOfMonths: 1
+                })
+                .on("change", function () {
+                    to.datepicker("option", "minDate", getDate(this));
+                }),
+
+            to = $("#task_to").datepicker({
+                defaultDate: "+1w",
+                changeMonth: true,
+                changeYear: true,
+                numberOfMonths: 1
+            })
+                .on("change", function () {
+                    from.datepicker("option", "maxDate", getDate(this));
+                });
+
+        function getDate(element) {
+            var date;
+            try {
+                date = $.datepicker.parseDate(dateFormat, element.value);
+            } catch (error) {
+                date = null;
+            }
+
+            return date;
+        }
+    });
+
+    $(document).on('click', '#task_filter', function () {
+        task_filter();
+    })
+
+    function task_filter() {
+        var fromDate = $("#task_from").val();
+        var toDate = $("#task_to").val();
+        var user_id = $('#user_data').val();
+
+        if (fromDate && toDate || user_id) {
+            $.ajaxSetup({
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                }
+            });
+
+            $.ajax({
+                url: '/filter-tasks', // Use route helper for URL
+                method: "GET",
+                data: {
+                    from: fromDate,
+                    to: toDate,
+                    user_id: user_id
+                },
+
+                success: function (response) {
+                    console.log(response);
+                    $('#allTasks').html(response.html)
+                }
+            });
+        }
+    }
 });
 

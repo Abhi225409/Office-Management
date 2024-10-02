@@ -12,6 +12,38 @@
     </div>
 </header>
 
+<div class="filters_section">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="wrapper">
+                    <div class="text">
+                        <p>Filters:</p>
+                    </div>
+                    <div class="users">
+                        <select name="user_data" id="user_data" class="form-control">
+                            <option value="">Select User</option>
+                            @foreach ($users as $user)
+                                <option value="{{ $user->id }}">{{ $user->name }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="datefilter mt-5">
+                        <label for="task_from">From</label>
+                        <input type="text" id="task_from" name="from">
+                        <label for="task_to">to</label>
+                        <input type="text" id="task_to" name="to">
+                    </div>
+
+                    <div class="filter_button">
+                        <button id="task_filter" class="black_button"> Apply</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @include('components.message')
 
 <table class="table table-dark position-relative ">
@@ -25,7 +57,7 @@
             <th class="col-md-3 text-center" colspan="3">Actions</th>
         </tr>
     </thead>
-    <tbody id="allProjects">
+    <tbody id="allTasks">
         @foreach ($tasks as $task)
             <tr>
                 <th class="col-md-1" scope="row">{{ $task->id }}</th>
@@ -58,8 +90,7 @@
                         @endcan
 
                         @can('delete projects')
-                            <a href="{{ route('tasks.delete', $task->id) }}"
-                                class="btn btn-danger px-3 py-2">Delete</a>
+                            <a href="{{ route('tasks.delete', $task->id) }}" class="btn btn-danger px-3 py-2">Delete</a>
                         @endcan
 
                     </div>

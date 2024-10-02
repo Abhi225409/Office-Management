@@ -18,8 +18,8 @@ return new class extends Migration
             $table->string('name');
             $table->string('description');
             $table->string('assigned_hours');
-            $table->string('consumed_hours')->default(0);
-            $table->string('reamining_hours')->default(0);
+            $table->string('consumed_hours')->default('00:00:00');
+            $table->string('reamining_hours')->default('00:00:00');
             $table->foreignIdFor(Project::class)->default(0);
             $table->foreignIdFor(User::class)->default(0);
             $table->tinyInteger('status')->default(0);

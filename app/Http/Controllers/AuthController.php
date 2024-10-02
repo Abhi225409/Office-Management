@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Lunch;
 use App\Models\Project;
 use App\Models\Task;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
@@ -42,7 +44,8 @@ class AuthController extends Controller
     {
         $tasks = Task::where('user_id', auth()->user()->id)->get();
         $projects = Project::orderBy('name', 'ASC')->get();
-        return view('/dashboard',compact('tasks','projects'));
+        $breaks = Lunch::where('user_id', auth()->user()->id)->whereDate('date', Carbon::today())->get();
+        return view('/dashboard', compact('tasks', 'projects', 'breaks'));
     }
 
     public function logout()

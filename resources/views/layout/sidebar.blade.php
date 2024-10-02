@@ -6,11 +6,14 @@
     <meta charset="utf-8" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.14.0/themes/base/jquery-ui.css">
     <link href="{{ asset('css/style.css') }}" rel="stylesheet">
     <script src="{{ asset('js/jquery.min.js') }}"></script>
+    <script src="https://code.jquery.com/ui/1.14.0/jquery-ui.js"></script>
+    <script src="https://code.jquery.com/ui/1.14.0/jquery-ui.js"></script>
     <script src="{{ asset('js/script.js') }}"></script>
     <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
-    
+
     {{-- Link the bootstrap.css Fle --}}
     <link rel="stylesheet" href="{{ asset('css/bootstrap/bootstrap.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -41,7 +44,7 @@
                         @can('view users')
                             <li class="tab"><a class="{{ $current_page == 'users' ? 'active' : '' }}" id="all-users"
                                     href="{{ route('users.index') }}">
-                                    <i class="fa-solid fa-users"></i></a>
+                                    <i class="fa-solid fa-user-plus"></i></a>
                             </li>
                         @endcan
 
@@ -71,6 +74,13 @@
                             <li class="tab"><a class="{{ $current_page == 'permissions' ? 'active' : '' }}"
                                     id="dashboard" href="{{ route('permissions.index') }}">
                                     <i class="fas fa-user-lock"></i></a>
+                            </li>
+                        @endcan
+
+                        @can('view permissions')
+                            <li class="tab"><a class="{{ $current_page == 'clients' ? 'active' : '' }}" id="dashboard"
+                                    href="{{ route('clients.index') }}">
+                                    <i class="fas fa-users"></i></a>
                             </li>
                         @endcan
 

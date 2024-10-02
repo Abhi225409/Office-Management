@@ -12,6 +12,13 @@
     </div>
 </header>
 
+<div class="datefilter mt-5">
+    <label for="from">From</label>
+    <input type="text" id="from" name="from">
+    <label for="to">to</label>
+    <input type="text" id="to" name="to">
+</div>
+
 @include('components.message')
 
 <table class="table table-dark position-relative ">
@@ -46,10 +53,10 @@
                                 class="btn btn-danger px-3 py-2">Delete</a>
                         @endcan
 
-                        
-                            <a href="{{ route('projects.detail', $project->id) }}"
-                                class="btn btn-success px-3 py-2">View</a>
-                        
+
+                        <a href="{{ route('projects.detail', $project->id) }}"
+                            class="btn btn-success px-3 py-2">View</a>
+
 
                     </div>
                 </td>

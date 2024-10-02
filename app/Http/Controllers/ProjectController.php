@@ -135,10 +135,64 @@ class ProjectController extends Controller implements HasMiddleware
         }
     }
 
-    public function detail($id){
+    public function detail($id)
+    {
         $project = Project::findOrFail($id);
         $tasks = Task::where('project_id', $id)->get();
         $users = User::orderBy('name', 'ASC')->get();
-        return view('projects.detail',compact('project','tasks','users'));
+        return view('projects.detail', compact('project', 'tasks', 'users'));
+    }
+
+
+    public function filterProjects(Request $request)
+    {
+        // Validate the incoming request data
+        $request->validate([
+            'from' => 'required|date',
+            'to' => 'required|date',
+        ]);
+
+        $fromDate = $request->input('from');
+        $toDate = $request->input('to');
+
+        $fromYearMonth = date('Y-m-d', strtotime($fromDate));
+        $toYearMonth = date('Y-m-d', strtotime($toDate));
+
+        $filteredData = Project::whereBetween('created_at', [$fromYearMonth, $toYearMonth])->get();
+
+        $output = "";
+
+        // Loop through each project and build the output string
+        foreach ($filteredData as $project) {
+            $output .= '<tr>';
+            $output .= '<th class="col-md-1" scope="row">' . $project->id . '</th>';
+            $output .= '<td class="col-md-2">' . $project->name . '</td>';
+            $output .= '<td class="col-md-2">' . $project->client_name . '</td>';
+            $output .= '<td class="col-md-2">' . $project->project_type . '</td>';
+            $output .= '<td class="col-md-1">' . $project->total_hours . '</td>';
+            $output .= '<td class="col-md-2">' . ($project->consumed_hours ? $project->consumed_hours : 0) . '</td>';
+            $output .= '<td class="col-md-3">';
+            $output .= '<div style="gap: 40px; display:flex; justify-content:center;">';
+
+            // Check user permission for editing projects
+            if (auth()->user()->can('edit projects')) {
+                $output .= '<a href="' . route('projects.edit', $project->id) . '" class="btn btn-success px-3 py-2">Edit</a>';
+            }
+
+            // Check user permission for deleting projects
+            if (auth()->user()->can('delete projects')) {
+                $output .= '<a href="' . route('projects.delete', $project->id) . '" class="btn btn-danger px-3 py-2">Delete</a>';
+            }
+
+            // View button
+            $output .= '<a href="' . route('projects.detail', $project->id) . '" class="btn btn-success px-3 py-2">View</a>';
+
+            $output .= '</div>';
+            $output .= '</td>';
+            $output .= '</tr>';
+        }
+
+        // Return the output
+        return response()->json(['html' => $output]);
     }
 }

@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BreakController;
+use App\Http\Controllers\ClientController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\RoleController;
@@ -64,6 +66,17 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('/tasks/restore/{id}', [TaskController::class, 'restore'])->name('tasks.restore');
     Route::get('/tasks/{id}/delete', [TaskController::class, 'permanetDelete'])->name('tasks.permanetdelete');
     Route::post('/saveHours', [TaskController::class, 'saveTaskTimer'])->name('tasks.saveHours');
+
+    Route::get('/filter-projects', [ProjectController::class, 'filterProjects'])->name('filter.projects');
+    Route::get('//filter-tasks', [TaskController::class, 'filterTasks'])->name('filter.tasks');
+
+    // Client Module
+    Route::resource('clients', ClientController::class);
+
+
+    // Management Module
+    Route::post('/break/start', [BreakController::class, 'startBreak'])->name('break.start');
+    Route::post('/break/end/', [BreakController::class, 'endBreak'])->name('break.end');
 
 
     //########## User Logout Module ##########//
