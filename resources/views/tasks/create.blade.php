@@ -69,8 +69,10 @@
                     </div>
 
                     <div class="col-md-8 mt-3">
-                        <input placeholder="Enter Assigned Hours" name="assigned_hours" class="form-control"
-                            type="text" value="{{ old('assigned_hours') }}" />
+                        <input placeholder="Assigned Hours HH:MM:SS" name="assigned_hours" class="form-control"
+                            pattern="^([0-1][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$"
+                            title="Please enter the time in HH:MM:SS format" type="text"
+                            value="{{ old('assigned_hours') }}"required />
 
                         @error('assigned_hours')
                             <p class=" mt-2 text-danger">{{ $message }}</p>

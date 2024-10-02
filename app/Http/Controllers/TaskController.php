@@ -49,9 +49,11 @@ class TaskController extends Controller implements HasMiddleware
         $validator = Validator::make($request->all(), [
             'name' => 'required|min:3',
             'description' => 'required',
-            'assigned_hours' => 'required',
+            'assigned_hours' => ['required', 'regex:/^([0-1][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/'],
             'project_id' => 'required',
             'user_id' => 'required',
+        ], [
+            'assigned_hours.regex' => 'Assigned hours must be in HH:MM:SS format',
         ]);
 
         if ($validator->passes()) {
@@ -62,13 +64,35 @@ class TaskController extends Controller implements HasMiddleware
             $project->name = $request->name;
             $project->description = $request->description;
             $project->assigned_hours = $request->assigned_hours;
+            $project->consumed_hours = "00:00:00";
+            $project->reamining_hours = $request->assigned_hours;
             $project->project_id = $request->project_id;
             $project->user_id = $request->user_id;
             $project->save();
 
             $poject_value = Project::findOrFail($request->project_id);
             $pro_assigned_hours = $poject_value->assigned_hours;
-            $poject_value->assigned_hours = $request->assigned_hours + $pro_assigned_hours;
+            $time1 = $request->assigned_hours;
+            $time2 = $pro_assigned_hours;
+            function timeToSeconds($time)
+            {
+                sscanf($time, "%d:%d:%d", $hours, $minutes, $seconds);
+                return $hours * 3600 + $minutes * 60 + $seconds;
+            }
+            function secondsToTime($seconds)
+            {
+                $hours = floor($seconds / 3600);
+                $minutes = floor(($seconds % 3600) / 60);
+                $seconds = $seconds % 60;
+
+                // Return formatted time as H:i:s
+                return sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
+            }
+            $time1InSeconds = timeToSeconds($time1);
+            $time2InSeconds = timeToSeconds($time2);
+            $totalSeconds = $time1InSeconds + $time2InSeconds;
+            $totalTime = secondsToTime($totalSeconds);
+            $poject_value->assigned_hours = $totalTime;
             $poject_value->save();
             return redirect(route('tasks.index'))->with('success', 'Task Created Successfully');
         } else {
@@ -92,9 +116,11 @@ class TaskController extends Controller implements HasMiddleware
         $validator = Validator::make($request->all(), [
             'name' => 'required|min:3',
             'description' => 'required',
-            'assigned_hours' => 'required',
+            'assigned_hours' => ['required', 'regex:/^([0-1][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/'],
             'project_id' => 'required',
             'user_id' => 'required',
+        ], [
+            'assigned_hours.regex' => 'Assigned hours must be in HH:MM:SS format',
         ]);
 
         if ($validator->passes()) {
@@ -103,7 +129,42 @@ class TaskController extends Controller implements HasMiddleware
             $task->assigned_hours = $request->assigned_hours;
             $task->project_id = $request->project_id;
             $task->user_id = $request->user_id;
+
+            $project_value = Project::findOrFail($request->project_id);
+            // Convert time format to seconds
+            function timeToSeconds($time)
+            {
+                sscanf($time, "%d:%d:%d", $hours, $minutes, $seconds);
+                return $hours * 3600 + $minutes * 60 + $seconds;
+            }
+
+            // Convert seconds back to time format
+            function secondsToTime($seconds)
+            {
+                $hours = floor($seconds / 3600);
+                $minutes = floor(($seconds % 3600) / 60);
+                $seconds = $seconds % 60;
+
+                return sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
+            }
+            $pro_assigned_hours = $project_value->assigned_hours;
+            $previous_task_hours = $task->assigned_hours;
+            $new_task_hours = $request->assigned_hours;
+
+            // Convert all time values to seconds
+            $pro_assigned_seconds = timeToSeconds($pro_assigned_hours);
+            $previous_task_seconds = timeToSeconds($previous_task_hours);
+            $new_task_seconds = timeToSeconds($new_task_hours);
+            $updated_project_seconds = $pro_assigned_seconds - $previous_task_seconds;
+            $updated_project_seconds += $new_task_seconds;
+
+            // Convert total seconds back to HH:MM:SS format and update the project assigned hours
+            $updated_project_time = secondsToTime($updated_project_seconds);
+            $project_value->assigned_hours = $updated_project_time;
+            $task->reamining_hours = $updated_project_time;
+
             $task->save();
+            $project_value->save();
 
             return redirect(route('tasks.index'))->with('success', 'Task Updated Successfully');
         } else {
@@ -124,8 +185,34 @@ class TaskController extends Controller implements HasMiddleware
     public function restore($id)
     {
         $task = Task::withTrashed()->findOrFail($id);
+        $taks_assignedHours = $task->assigned_hours;
         if (!is_null($task)) {
             $task->restore();
+
+            function timeToSeconds($time)
+            {
+                sscanf($time, "%d:%d:%d", $hours, $minutes, $seconds);
+                return $hours * 3600 + $minutes * 60 + $seconds;
+            }
+
+            // Convert seconds back to time format
+            function secondsToTime($seconds)
+            {
+                $hours = floor($seconds / 3600);
+                $minutes = floor(($seconds % 3600) / 60);
+                $seconds = $seconds % 60;
+
+                return sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
+            }
+            $poject = Project::findOrFail($task->project_id);
+            $pro_assigned_hours = $poject->assigned_hours;
+
+            $pro_assigned_seconds = timeToSeconds($pro_assigned_hours);
+            $task_seconds = timeToSeconds($taks_assignedHours);
+            $updated_project_seconds = $pro_assigned_seconds + $task_seconds;
+            $updated_project_seconds = secondsToTime($updated_project_seconds);
+            $poject->assigned_hours =  $updated_project_seconds;
+            $poject->save();
         }
         return redirect(route('tasks.index'))->with('success', 'Task Restored Successfully');
     }
@@ -137,9 +224,30 @@ class TaskController extends Controller implements HasMiddleware
         $taks_assignedHours = $task->assigned_hours;
         if (!is_null($task)) {
             $task->delete();
+
+            function timeToSeconds($time)
+            {
+                sscanf($time, "%d:%d:%d", $hours, $minutes, $seconds);
+                return $hours * 3600 + $minutes * 60 + $seconds;
+            }
+
+            // Convert seconds back to time format
+            function secondsToTime($seconds)
+            {
+                $hours = floor($seconds / 3600);
+                $minutes = floor(($seconds % 3600) / 60);
+                $seconds = $seconds % 60;
+
+                return sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
+            }
             $poject = Project::findOrFail($task->project_id);
             $pro_assigned_hours = $poject->assigned_hours;
-            $poject->assigned_hours =  $pro_assigned_hours - $taks_assignedHours;
+
+            $pro_assigned_seconds = timeToSeconds($pro_assigned_hours);
+            $task_seconds = timeToSeconds($taks_assignedHours);
+            $updated_project_seconds = $pro_assigned_seconds - $task_seconds;
+            $updated_project_seconds = secondsToTime($updated_project_seconds);
+            $poject->assigned_hours =  $updated_project_seconds;
             $poject->save();
             return redirect(route('tasks.index'))->with('success', 'Task has been moved to trashed Successfully');
         }
@@ -154,9 +262,29 @@ class TaskController extends Controller implements HasMiddleware
         if (!is_null($task)) {
             $task->forceDelete();
 
+            function timeToSeconds($time)
+            {
+                sscanf($time, "%d:%d:%d", $hours, $minutes, $seconds);
+                return $hours * 3600 + $minutes * 60 + $seconds;
+            }
+
+            // Convert seconds back to time format
+            function secondsToTime($seconds)
+            {
+                $hours = floor($seconds / 3600);
+                $minutes = floor(($seconds % 3600) / 60);
+                $seconds = $seconds % 60;
+
+                return sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
+            }
             $poject = Project::findOrFail($task->project_id);
             $pro_assigned_hours = $poject->assigned_hours;
-            $poject->assigned_hours =  $pro_assigned_hours - $taks_assignedHours;
+
+            $pro_assigned_seconds = timeToSeconds($pro_assigned_hours);
+            $task_seconds = timeToSeconds($taks_assignedHours);
+            $updated_project_seconds = $pro_assigned_seconds - $task_seconds;
+            $updated_project_seconds = secondsToTime($updated_project_seconds);
+            $poject->assigned_hours =  $updated_project_seconds;
             $poject->save();
         }
         return redirect(route('task.index'))->with('success', 'Task Permanently Deleted Successfully');

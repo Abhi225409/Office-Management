@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Client;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
@@ -59,7 +60,8 @@ class ProjectController extends Controller implements HasMiddleware
     //########## This method will show Create project page ##########//
     public function create()
     {
-        return view('projects.create');
+        $clients = Client::orderBy('name', 'ASC')->get();
+        return view('projects.create', compact('clients'));
     }
 
     //########## This method will insert a Project in DB ##########//
@@ -80,6 +82,8 @@ class ProjectController extends Controller implements HasMiddleware
             $project->client_name = $request->client_name;
             $project->project_type = $request->project_type;
             $project->total_hours = $request->total_hours;
+            $project->assigned_hours = "00:00:00";
+            $project->status = 0;
             $project->save();
 
             return redirect(route('projects.index'))->with('success', 'Project Created Successfully');
@@ -155,8 +159,10 @@ class ProjectController extends Controller implements HasMiddleware
         $fromDate = $request->input('from');
         $toDate = $request->input('to');
 
-        $fromYearMonth = date('Y-m-d', strtotime($fromDate));
-        $toYearMonth = date('Y-m-d', strtotime($toDate));
+        if ($fromDate && $toDate) {
+            $fromYearMonth = date('Y-m-d', strtotime($fromDate));
+            $toYearMonth = date('Y-m-d', strtotime($toDate));
+        }
 
         $filteredData = Project::whereBetween('created_at', [$fromYearMonth, $toYearMonth])->get();
 

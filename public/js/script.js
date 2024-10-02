@@ -1,7 +1,7 @@
 $(document).ready(function () {
-    var consumedTimers = {}; // Object to hold consumed time (count up) in seconds for each task
-    var remainingTimers = {}; // Object to hold remaining time (count down) in seconds for each task
-    var intervals = {}; // Object to hold interval IDs for each checkbox
+    var consumedTimers = {};
+    var remainingTimers = {};
+    var intervals = {};
 
     // Function to save the task timer via AJAX
     function save_task_timer(taskId, consumed_hours, reamining_hours) {
@@ -11,7 +11,7 @@ $(document).ready(function () {
             }
         });
         $.ajax({
-            url: "/saveHours", // Laravel route for saving
+            url: "/saveHours",
             method: "POST",
             data: {
                 task_id: taskId,
@@ -20,15 +20,11 @@ $(document).ready(function () {
             },
             success: function (response) {
                 if (response.success) {
-                    alert(response.message);
+                    console.log(response.message);
                 } else {
                     alert("Failed to save task timer!");
                 }
             },
-            error: function (xhr, status, error) {
-                console.error(error);
-                alert("An error occurred while saving the task timer.");
-            }
         });
     }
 
@@ -252,7 +248,7 @@ $(document).ready(function () {
 
 
     function checkCheckboxes() {
-        var isTaskChecked = $('#task-checkbox').is(':checked');
+        var isTaskChecked = $('.task-checkbox').is(':checked');
         var isBreakChecked = $('#break-checkbox').is(':checked');
 
         // Check if both checkboxes are unchecked
@@ -268,48 +264,39 @@ $(document).ready(function () {
     // #################### Break Management End ####################
 
     $(function () {
-        var dateFormat = "mm/dd/yy",
-            from = $("#from")
-                .datepicker({
-                    defaultDate: "+1w",
-                    changeMonth: true,
-                    changeYear: true,
-                    numberOfMonths: 1
-                })
-                .on("change", function () {
-                    to.datepicker("option", "minDate", getDate(this));
-                    triggerAjaxIfBothSelected();
-                }),
+        const dateFormat = "mm/dd/yy";
 
-            to = $("#to").datepicker({
+        function initializeDatepickers(fromSelector, toSelector, onChangeCallback) {
+            var from = $(fromSelector).datepicker({
                 defaultDate: "+1w",
                 changeMonth: true,
                 changeYear: true,
                 numberOfMonths: 1
-            })
-                .on("change", function () {
-                    from.datepicker("option", "maxDate", getDate(this));
-                    triggerAjaxIfBothSelected();
-                });
+            }).on("change", function () {
+                to.datepicker("option", "minDate", getDate(this));
+                if (onChangeCallback) onChangeCallback();
+            });
 
-        function getDate(element) {
-            var date;
-            try {
-                date = $.datepicker.parseDate(dateFormat, element.value);
-            } catch (error) {
-                date = null;
+            var to = $(toSelector).datepicker({
+                defaultDate: "+1w",
+                changeMonth: true,
+                changeYear: true,
+                numberOfMonths: 1
+            }).on("change", function () {
+                from.datepicker("option", "maxDate", getDate(this));
+                if (onChangeCallback) onChangeCallback();
+            });
+
+            function getDate(element) {
+                try {
+                    return $.datepicker.parseDate(dateFormat, element.value);
+                } catch (error) {
+                    return null;
+                }
             }
-
-            return date;
         }
-    });
 
-
-    function triggerAjaxIfBothSelected() {
-        var fromDate = $("#from").val();
-        var toDate = $("#to").val();
-
-        if (fromDate && toDate) {
+        function triggerAjax(url, data, targetElement) {
             $.ajaxSetup({
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -317,89 +304,39 @@ $(document).ready(function () {
             });
 
             $.ajax({
-                url: '/filter-projects', // Use route helper for URL
+                url: url,
                 method: "GET",
-                data: {
-                    from: fromDate,
-                    to: toDate
-                },
-
+                data: data,
                 success: function (response) {
                     console.log(response);
-                    $('#allProjects').html(response.html)
+                    $(targetElement).html(response.html);
                 }
             });
-
         }
-    }
 
-    //######################### Task Filter ################################################
-    $(function () {
-        var dateFormat = "mm/dd/yy",
-            from = $("#task_from")
-                .datepicker({
-                    defaultDate: "+1w",
-                    changeMonth: true,
-                    changeYear: true,
-                    numberOfMonths: 1
-                })
-                .on("change", function () {
-                    to.datepicker("option", "minDate", getDate(this));
-                }),
-
-            to = $("#task_to").datepicker({
-                defaultDate: "+1w",
-                changeMonth: true,
-                changeYear: true,
-                numberOfMonths: 1
-            })
-                .on("change", function () {
-                    from.datepicker("option", "maxDate", getDate(this));
-                });
-
-        function getDate(element) {
-            var date;
-            try {
-                date = $.datepicker.parseDate(dateFormat, element.value);
-            } catch (error) {
-                date = null;
+        //############# Project Filter Datepicker ############# 
+        initializeDatepickers("#from", "#to", function () {
+            var fromDate = $("#from").val();
+            var toDate = $("#to").val();
+            if (fromDate && toDate) {
+                triggerAjax('/filter-projects', { from: fromDate, to: toDate }, '#allProjects');
             }
+        });
 
-            return date;
-        }
+        //#############  Task Filter Datepicker ############# 
+        initializeDatepickers("#task_from", "#task_to");
+
+        // Task Filter AJAX Call
+        $(document).on('click', '#task_filter', function () {
+            var fromDate = $("#task_from").val();
+            var toDate = $("#task_to").val();
+            var user_id = $('#user_data').val();
+
+            if ((fromDate && toDate) || user_id) {
+                triggerAjax('/filter-tasks', { from: fromDate, to: toDate, user_id: user_id }, '#allTasks');
+            }
+        });
     });
 
-    $(document).on('click', '#task_filter', function () {
-        task_filter();
-    })
-
-    function task_filter() {
-        var fromDate = $("#task_from").val();
-        var toDate = $("#task_to").val();
-        var user_id = $('#user_data').val();
-
-        if (fromDate && toDate || user_id) {
-            $.ajaxSetup({
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                }
-            });
-
-            $.ajax({
-                url: '/filter-tasks', // Use route helper for URL
-                method: "GET",
-                data: {
-                    from: fromDate,
-                    to: toDate,
-                    user_id: user_id
-                },
-
-                success: function (response) {
-                    console.log(response);
-                    $('#allTasks').html(response.html)
-                }
-            });
-        }
-    }
 });
 

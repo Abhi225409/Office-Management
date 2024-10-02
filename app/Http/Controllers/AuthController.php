@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Loginlogout;
 use App\Models\Lunch;
 use App\Models\Project;
 use App\Models\Task;
@@ -26,15 +27,17 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
-        // $credentials = $request->only('email', 'password');
         // Attempt to log in using email and password
         if (Auth::attempt($credentials)) {
+            $user = Auth::user();
+            $loginlogout = new Loginlogout;
+            $loginlogout->user_id = $user->id;
+            $loginlogout->date = now()->toDateString();
+            $loginlogout->login_time = now();
+            $loginlogout->save();
             return redirect()->route('dashboard');
         } else {
-            // Authentication failed, log the attempt
             Log::info('Login attempt failed', ['email' => $credentials['email'], 'password' => $credentials['password']]);
-
-            // Redirect back to login page with error message
             return redirect('/')->with('error', 'Login details are not valid');
         }
     }
@@ -45,11 +48,24 @@ class AuthController extends Controller
         $tasks = Task::where('user_id', auth()->user()->id)->get();
         $projects = Project::orderBy('name', 'ASC')->get();
         $breaks = Lunch::where('user_id', auth()->user()->id)->whereDate('date', Carbon::today())->get();
-        return view('/dashboard', compact('tasks', 'projects', 'breaks'));
+        $loginlogouts = Loginlogout::where('user_id', auth()->user()->id)->whereDate('date', Carbon::today())->get();
+        return view('/dashboard', compact('tasks', 'projects', 'breaks', 'loginlogouts'));
     }
 
     public function logout()
     {
+        $user = Auth::user();
+        // Find the break record for the current date, where end_time is null
+        $loginlogout = Loginlogout::where('user_id', $user->id)
+            ->where('date', now()->toDateString())
+            ->whereNull('logout_time')
+            ->first();
+
+        // If a matching break is found, update the end_time
+        if ($loginlogout) {
+            $loginlogout->logout_time = now(); // Set the current time as the end time
+            $loginlogout->save();
+        }
         Auth::logout();
         return redirect('');
     }

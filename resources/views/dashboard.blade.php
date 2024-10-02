@@ -9,6 +9,9 @@
 @php
     $allIntervels = [];
     $totalSeconds = 0;
+
+    $allLogins = [];
+    $totallogseconds = 0;
 @endphp
 
 @foreach ($breaks as $break)
@@ -21,6 +24,19 @@
         // Convert the interval to seconds and add to total
         $seconds = $interval->h * 3600 + $interval->i * 60 + $interval->s;
         $totalSeconds += $seconds;
+    @endphp
+@endforeach
+
+@foreach ($loginlogouts as $loginlogout)
+    @php
+        $logdatetime1 = new DateTime($loginlogout->login_time);
+        $logdatetime2 = new DateTime($loginlogout->logout_time);
+        $loginterval = $logdatetime1->diff($logdatetime2);
+        $allLogins[] = $loginterval;
+
+        // Convert the interval to seconds and add to total
+        $logseconds = $loginterval->h * 3600 + $loginterval->i * 60 + $loginterval->s;
+        $totallogseconds += $logseconds;
     @endphp
 @endforeach
 
@@ -37,7 +53,6 @@
                     </div>
                     <div class="diffrence">
                         @php
-                            // Convert total seconds back to hours, minutes, seconds
                             $hours = floor($totalSeconds / 3600);
                             $minutes = floor(($totalSeconds % 3600) / 60);
                             $seconds = $totalSeconds % 60;
@@ -49,6 +64,50 @@
                         Status : Working
 
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="break_lunch">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="wprapper">
+                    <div class="col-md-3">
+                        <h4>Login Details</h4>
+                    </div>
+
+                    <table class=" col-md-6">
+                        <tr>
+                            <th>Login Time</th>
+                            <th>Logoutin Time</th>
+                        </tr>
+                        @foreach ($loginlogouts as $value)
+                            <tr>
+                                <td>
+                                    @php $login_time = $value->login_time; @endphp
+                                    {{ date('H:i:s', strtotime($login_time)) }}
+                                </td>
+                                <td>
+                                    @php $logout_time = $value->logout_time ? date('H:i:s', strtotime($value->logout_time)) : 'Not Define'; @endphp
+                                    {{ $logout_time }}
+                                </td>
+                            </tr>
+                        @endforeach
+                    </table>
+
+                    <div class="col-md-3">
+                        @php
+                            $loghours = floor($totallogseconds / 3600);
+                            $logminutes = floor(($totallogseconds % 3600) / 60);
+                            $logseconds = $totallogseconds % 60;
+
+                            echo "Office Hours : {$loghours}H, {$logminutes}M, {$logseconds}S";
+                        @endphp
+                    </div>
+
                 </div>
             </div>
         </div>

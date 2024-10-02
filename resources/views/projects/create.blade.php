@@ -73,9 +73,11 @@
                     <div class="col-md-8 mt-3">
                         <select class="form-control" name="client_name">
                             <option value="">Select Your Client</option>
-                            <option value="Denial">Denial</option>
-                            <option value="Mayur">Mayur</option>
-                            <option value="Chad">Chad</option>
+                            @foreach ($clients as $client)
+                                <option value="{{ $client->id }}">{{ $client->name }}</option>
+                            @endforeach
+
+
                         </select>
 
                         @error('client_name')
