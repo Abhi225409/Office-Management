@@ -6,13 +6,11 @@
     </div>
 </header>
 
-<style>
+<style> 
     .form_wrapper {
         background: black;
-        max-width: 700px;
         width: 100%;
-        margin: 0 auto;
-        padding: 40px 70px;
+        padding: 20px;
         border-radius: 30px;
     }
 
@@ -47,8 +45,11 @@
     .checkboxes_value {
         display: flex;
         flex-wrap: wrap;
-        gap: 30px;
-        color: white;
+        justify-content: space-between;
+        color: black;
+    }
+    .form-check{
+        width: 33.33%;
     }
 </style>
 
@@ -57,22 +58,22 @@
     <div class="container">
         <div class="col-md-12">
             <div class="form_wrapper">
-                <h2 class="text-center text-white mb-5">Role Form</h2>
                 <form class="permission_form" action="{{ route('roles.update', $role->id) }}" method="post">
                     @csrf
-                    <div class="col-md-6">
-                        <input placeholder="Enter Role Name" name="name" class="form-control" type="text"
+                    <div class="col-md-12">
+                        <input readonly  name="name" class="form-control" type="hidden"
                             value="{{ old('name', $role->name) }}" />
 
                         @error('name')
                             <p class=" mt-2 text-danger">{{ $message }}</p>
                         @enderror
+                        <h4 class="text-white" title="Once a role is created you cannot change its name.">You are updating the position for the "{{$role->name}}" role </h4>
                     </div>
 
                     <div class="col-md-12 checkboxes_value mt-5">
                         @if ($permissions->isNotEmpty())
                             @foreach ($permissions as $permission)
-                                <div class="form-check">
+                                <div class="form-check text-white">
                                     <input {{ $hasPermissions->contains($permission->name) ? 'checked' : '' }}
                                         class="form-check-input" id="permission-{{ $permission->id }}" type="checkbox"
                                         name="permission[]" value="{{ $permission->name }}">
